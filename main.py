@@ -9,6 +9,8 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from contextlib import asynccontextmanager
+
 
 
 
@@ -28,7 +30,15 @@ if not TMDB_API_KEY:
 
 # FASTAPI APP
 
-app = FastAPI(title="Movie Recommender API", version="3.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load resources
+    load_pickles()
+    yield
+
+
+app = FastAPI(title="Movie Recommender API", version="3.0", lifespan=lifespan)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -280,7 +290,7 @@ async def attach_tmdb_card_by_title(title: str) -> Optional[TMDBMovieCard]:
 
 # STARTUP: LOAD PICKLES
 
-@app.on_event("startup")
+
 def load_pickles():
     global df, indices_obj, tfidf_matrix, tfidf_obj, TITLE_TO_IDX
 
